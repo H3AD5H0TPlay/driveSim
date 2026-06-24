@@ -166,11 +166,11 @@ func generate_road(route_data: Dictionary):
 			itinerary_text += ref + ", "
 			added_refs[ref] = true
 			
-	itinerary_text += "\n\n[b]Érintett települések (töltés...):[/b]\n"
+	itinerary_text += "\n\n[b]Érintett települések (töltés...):[/b]\n(Települések lekérdezése API limitációk miatt kikapcsolva)"
 	$DrivingUI/ItineraryPanel/RichTextLabel.text = itinerary_text
 	
 	# Háttérfolyamat indítása a települések letöltéséhez
-	_fetch_settlements_async(coords, itinerary_text)
+	# _fetch_settlements_async(coords, itinerary_text)
 	
 	# Autó pozícionálása az eredeti első pontra (most ez az 1-es indexű, mert a 0-ás az a meghosszabbított kezdés)
 	var start_pos = curve.get_point_position(1) if points_3d.size() > 1 else curve.get_point_position(0)
