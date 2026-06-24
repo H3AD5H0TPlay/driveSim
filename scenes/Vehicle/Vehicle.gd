@@ -1,8 +1,10 @@
 extends VehicleBody3D
 
-const MAX_ENGINE_FORCE = 400.0
+const MAX_ENGINE_FORCE = 1500.0
 const MAX_BRAKE_FORCE = 150.0
 const MAX_STEER_ANGLE = 0.5
+
+@onready var speed_label = $HUD/SpeedLabel
 
 func _physics_process(delta):
 	# Alapvető manuális irányítás a teszteléshez
@@ -26,3 +28,9 @@ func _physics_process(delta):
 		brake = MAX_BRAKE_FORCE
 	else:
 		brake = 0.0
+		
+	# Sebességmérő frissítése
+	if speed_label:
+		# Valós sebesség (hossz) m/s-ban, majd átváltva km/h-ra
+		var speed_kmh = linear_velocity.length() * 3.6
+		speed_label.text = "%d km/h" % int(speed_kmh)
