@@ -41,8 +41,13 @@ func _on_drive_button_pressed():
 	generate_road(route_data)
 	
 	ui_layer.hide()
+	$DrivingUI.show()
 	vehicle.process_mode = Node.PROCESS_MODE_INHERIT
 	vehicle.show()
+
+func _on_itinerary_button_pressed():
+	var panel = $DrivingUI/ItineraryPanel
+	panel.visible = !panel.visible
 
 func geocode_city(city_name: String):
 	var http = HTTPRequest.new()
@@ -68,7 +73,7 @@ func geocode_city(city_name: String):
 func get_osrm_route(start: Vector2, end: Vector2):
 	var http = HTTPRequest.new()
 	add_child(http)
-	var url = "http://router.project-osrm.org/route/v1/driving/%f,%f;%f,%f?overview=full&geometries=geojson" % [start.x, start.y, end.x, end.y]
+	var url = "http://router.project-osrm.org/route/v1/driving/%f,%f;%f,%f?overview=full&geometries=geojson&steps=true" % [start.x, start.y, end.x, end.y]
 	http.request(url)
 	
 	var response = await http.request_completed
@@ -95,20 +100,23 @@ func generate_road(route_data: Dictionary):
 	var origin_lon = float(coords[0][0])
 	var origin_lat = float(coords[0][1])
 	
+	var points_3d = []
 	for coord in coords:
 		var lon = float(coord[0])
 		var lat = float(coord[1])
-		
 		var dlat = lat - origin_lat
 		var dlon = lon - origin_lon
-		
-		# 1 fok szélesség ~ 111320 méter
-		# Z tengely a Godot-ban: +Z dél, -Z észak
 		var z = -dlat * 111320.0
-		# X tengely a Godot-ban: +X kelet, -X nyugat
 		var x = dlon * 111320.0 * cos(deg_to_rad(origin_lat))
+		points_3d.append(Vector3(x, 0, z))
 		
-		curve.add_point(Vector3(x, 0, z))
+	# Hosszabbítsuk meg az utat 20 méterrel hátrafelé, hogy az autó ne lógjon le a peremről!
+	if points_3d.size() > 1:
+		var dir = (points_3d[1] - points_3d[0]).normalized()
+		points_3d.insert(0, points_3d[0] - dir * 20.0)
+		
+	for p in points_3d:
+		curve.add_point(p)
 		
 	road_mesh = CSGPolygon3D.new()
 	road_mesh.mode = CSGPolygon3D.MODE_PATH
@@ -129,9 +137,28 @@ func generate_road(route_data: Dictionary):
 	road_mesh.material = mat
 	add_child(road_mesh)
 	
-	# Autó pozícionálása az első pontra, a második pont irányába nézve
-	var start_pos = curve.get_point_position(0)
-	var next_pos = curve.get_point_position(1)
+	# Útiterv szöveg generálása az OSRM step-ekből
+	var steps = route_data["routes"][0]["legs"][0].get("steps", [])
+	var itinerary_text = "[b]Útiterv:[/b]\n\n"
+	var added_names = {}
+	for step in steps:
+		var road_name = step.get("name", "")
+		var ref = step.get("ref", "")
+		var display_name = road_name
+		if display_name == "" and ref != "":
+			display_name = ref
+		elif display_name != "" and ref != "":
+			display_name += " (" + ref + ")"
+			
+		if display_name != "" and not added_names.has(display_name):
+			itinerary_text += "- " + display_name + "\n"
+			added_names[display_name] = true
+			
+	$DrivingUI/ItineraryPanel/RichTextLabel.text = itinerary_text
+	
+	# Autó pozícionálása az eredeti első pontra (most ez az 1-es indexű, mert a 0-ás az a meghosszabbított kezdés)
+	var start_pos = curve.get_point_position(1) if points_3d.size() > 1 else curve.get_point_position(0)
+	var next_pos = curve.get_point_position(2) if points_3d.size() > 2 else curve.get_point_position(1)
 	
 	vehicle.global_position = start_pos + Vector3(0, 2, 0)
 	# Irányba állítás a következő pont felé
