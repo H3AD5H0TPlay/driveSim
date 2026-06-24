@@ -1,0 +1,28 @@
+extends VehicleBody3D
+
+const MAX_ENGINE_FORCE = 400.0
+const MAX_BRAKE_FORCE = 10.0
+const MAX_STEER_ANGLE = 0.5
+
+func _physics_process(delta):
+	# Alapvető manuális irányítás a teszteléshez
+	var steer_val = 0.0
+	if Input.is_action_pressed("ui_left"):
+		steer_val = MAX_STEER_ANGLE
+	elif Input.is_action_pressed("ui_right"):
+		steer_val = -MAX_STEER_ANGLE
+	
+	steering = lerp(steering, steer_val, 5.0 * delta)
+
+	var accel = 0.0
+	if Input.is_action_pressed("ui_up"):
+		accel = MAX_ENGINE_FORCE
+	elif Input.is_action_pressed("ui_down"):
+		accel = -MAX_ENGINE_FORCE
+
+	engine_force = accel
+	
+	if Input.is_action_pressed("ui_accept"): # Szóköz - Fék
+		brake = MAX_BRAKE_FORCE
+	else:
+		brake = 0.0

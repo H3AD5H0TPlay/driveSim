@@ -1,0 +1,74 @@
+[gd_scene load_steps=3 format=3 uid="uid://vehicleuid123"]
+
+[ext_resource type="Script" path="res://scenes/Vehicle/Vehicle.gd" id="1_script"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
+size = Vector3(1.8, 1, 4)
+
+[node name="Vehicle" type="VehicleBody3D"]
+mass = 1200.0
+center_of_mass_mode = 1
+center_of_mass = Vector3(0, -0.2, 0)
+script = ExtResource("1_script")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("BoxShape3D_1")
+
+[node name="BodyMesh" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+size = Vector3(1.8, 1, 4)
+
+[node name="WheelFL" type="VehicleWheel3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0.35, 1.5)
+use_as_traction = true
+use_as_steering = true
+wheel_radius = 0.35
+suspension_stiffness = 40.0
+suspension_max_travel = 0.2
+
+[node name="Mesh" type="CSGCylinder3D" parent="WheelFL"]
+transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0, 0, 0)
+radius = 0.35
+height = 0.2
+
+[node name="WheelFR" type="VehicleWheel3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0.35, 1.5)
+use_as_traction = true
+use_as_steering = true
+wheel_radius = 0.35
+suspension_stiffness = 40.0
+suspension_max_travel = 0.2
+
+[node name="Mesh" type="CSGCylinder3D" parent="WheelFR"]
+transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0, 0, 0)
+radius = 0.35
+height = 0.2
+
+[node name="WheelBL" type="VehicleWheel3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0.35, -1.2)
+use_as_traction = true
+wheel_radius = 0.35
+suspension_stiffness = 40.0
+suspension_max_travel = 0.2
+
+[node name="Mesh" type="CSGCylinder3D" parent="WheelBL"]
+transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0, 0, 0)
+radius = 0.35
+height = 0.2
+
+[node name="WheelBR" type="VehicleWheel3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0.35, -1.2)
+use_as_traction = true
+wheel_radius = 0.35
+suspension_stiffness = 40.0
+suspension_max_travel = 0.2
+
+[node name="Mesh" type="CSGCylinder3D" parent="WheelBR"]
+transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0, 0, 0)
+radius = 0.35
+height = 0.2
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(-1, 3.25841e-07, -8.11295e-08, 0, 0.241922, 0.970296, 3.35805e-07, 0.970296, -0.241922, 0, 5, -8)
+current = true
