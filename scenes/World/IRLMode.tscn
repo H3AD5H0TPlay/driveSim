@@ -25,6 +25,58 @@ volumetric_fog_albedo = Color(0.8, 0.85, 0.9, 1)
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Grass"]
 albedo_color = Color(0.25, 0.35, 0.25, 1)
 
+[sub_resource type="GDScript" id="GDScript_Minimap"]
+script/source = "extends Control
+
+var route_points_2d = []
+var map_rect = Rect2()
+var vehicle = null
+
+func setup(points_3d: Array):
+	route_points_2d.clear()
+	if points_3d.size() == 0:
+		return
+	var min_x = points_3d[0].x
+	var max_x = points_3d[0].x
+	var min_z = points_3d[0].z
+	var max_z = points_3d[0].z
+	for p in points_3d:
+		if p.x < min_x: min_x = p.x
+		if p.x > max_x: max_x = p.x
+		if p.z < min_z: min_z = p.z
+		if p.z > max_z: max_z = p.z
+	map_rect = Rect2(min_x, min_z, max_x - min_x, max_z - min_z)
+	var pad = max(map_rect.size.x, map_rect.size.y) * 0.1
+	map_rect = map_rect.grow(pad)
+	if map_rect.size.x == 0: map_rect.size.x = 100
+	if map_rect.size.y == 0: map_rect.size.y = 100
+	for p in points_3d:
+		route_points_2d.append(Vector2(p.x, p.z))
+	queue_redraw()
+
+func _process(delta):
+	if visible and route_points_2d.size() > 0:
+		queue_redraw()
+
+func _draw():
+	if route_points_2d.size() < 2: return
+	var w = size.x
+	var h = size.y
+	var scale_factor = min(w / map_rect.size.x, h / map_rect.size.y)
+	var offset_x = (w - map_rect.size.x * scale_factor) / 2.0
+	var offset_y = (h - map_rect.size.y * scale_factor) / 2.0
+	var mapped_points = PackedVector2Array()
+	for p in route_points_2d:
+		var mx = offset_x + (p.x - map_rect.position.x) * scale_factor
+		var my = offset_y + (p.y - map_rect.position.y) * scale_factor
+		mapped_points.append(Vector2(mx, my))
+	draw_polyline(mapped_points, Color(0.2, 0.6, 1.0, 0.8), 3.0, true)
+	if vehicle:
+		var mx = offset_x + (vehicle.global_position.x - map_rect.position.x) * scale_factor
+		var my = offset_y + (vehicle.global_position.z - map_rect.position.y) * scale_factor
+		draw_circle(Vector2(mx, my), 5.0, Color.RED)
+"
+
 [node name="IRLMode" type="Node3D"]
 script = ExtResource("2_script")
 
@@ -140,3 +192,24 @@ theme_override_font_sizes/normal_font_size = 18
 bbcode_enabled = true
 
 [connection signal="pressed" from="DrivingUI/ItineraryButton" to="." method="_on_itinerary_button_pressed"]
+
+[node name="Minimap" type="Control" parent="DrivingUI"]
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -220.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = 220.0
+grow_horizontal = 0
+script = SubResource("GDScript_Minimap")
+
+[node name="Panel" type="Panel" parent="DrivingUI/Minimap"]
+show_behind_parent = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2

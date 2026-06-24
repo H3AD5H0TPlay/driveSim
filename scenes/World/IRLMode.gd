@@ -137,6 +137,38 @@ func generate_road(route_data: Dictionary):
 	road_mesh.material = mat
 	add_child(road_mesh)
 	
+	# Felezővonalak és szélvonalak generálása
+	var markings = CSGPolygon3D.new()
+	markings.mode = CSGPolygon3D.MODE_PATH
+	markings.path_node = path.get_path()
+	markings.path_interval_type = CSGPolygon3D.PATH_INTERVAL_DISTANCE
+	markings.path_interval = 2.0
+	
+	var mark_profile = PackedVector2Array()
+	# Bal szél
+	mark_profile.push_back(Vector2(-3.8, 0.01))
+	mark_profile.push_back(Vector2(-3.6, 0.01))
+	mark_profile.push_back(Vector2(-3.6, 0.02))
+	mark_profile.push_back(Vector2(-3.8, 0.02))
+	
+	# Jobb szél
+	mark_profile.push_back(Vector2(3.6, 0.01))
+	mark_profile.push_back(Vector2(3.8, 0.01))
+	mark_profile.push_back(Vector2(3.8, 0.02))
+	mark_profile.push_back(Vector2(3.6, 0.02))
+	
+	# Középső vonal
+	mark_profile.push_back(Vector2(-0.1, 0.01))
+	mark_profile.push_back(Vector2(0.1, 0.01))
+	mark_profile.push_back(Vector2(0.1, 0.02))
+	mark_profile.push_back(Vector2(-0.1, 0.02))
+	
+	markings.polygon = mark_profile
+	var mark_mat = StandardMaterial3D.new()
+	mark_mat.albedo_color = Color(1.0, 1.0, 1.0)
+	markings.material = mark_mat
+	add_child(markings)
+	
 	# Főutak (ref) kigyűjtése az OSRM adatokból (azonnal kész)
 	var steps = route_data["routes"][0]["legs"][0].get("steps", [])
 	var itinerary_text = "[b]Érintett főutak:[/b]\n"
@@ -164,6 +196,10 @@ func generate_road(route_data: Dictionary):
 	target.y = vehicle.global_position.y # Ne nézzen le a földbe
 	if start_pos.distance_to(next_pos) > 0.1:
 		vehicle.look_at(target, Vector3.UP)
+		
+	# Minimap beállítása
+	$DrivingUI/Minimap.vehicle = vehicle
+	$DrivingUI/Minimap.setup(points_3d)
 
 func _fetch_settlements_async(coords: Array, base_text: String):
 	var panel_label = $DrivingUI/ItineraryPanel/RichTextLabel
