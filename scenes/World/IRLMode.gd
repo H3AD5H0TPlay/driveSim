@@ -21,12 +21,20 @@ func _on_drive_button_pressed():
 		
 	status_label.text = "1/4: Kezdőpont keresése (Nominatim)..."
 	var start_coords = await geocode_city(start_input.text)
+	if start_coords != null and start_coords.x == -999:
+		status_label.text = "Hiba: API Limitáció (Túl sok kérés). Várj egy kicsit!"
+		return
 	if start_coords == null:
 		status_label.text = "Hiba: A kezdőpont nem található!"
 		return
 		
 	status_label.text = "2/4: Célpont keresése (Nominatim)..."
+	await get_tree().create_timer(1.2).timeout # Kötelező várakozás a 2. kérés előtt!
+	
 	var end_coords = await geocode_city(end_input.text)
+	if end_coords != null and end_coords.x == -999:
+		status_label.text = "Hiba: API Limitáció (Túl sok kérés). Várj egy kicsit!"
+		return
 	if end_coords == null:
 		status_label.text = "Hiba: A célpont nem található!"
 		return
@@ -50,9 +58,11 @@ func _on_itinerary_button_pressed():
 	panel.visible = !panel.visible
 
 func geocode_city(city_name: String):
+	# A Nominatim jobban kezeli a free-form szöveget vesszők nélkül
+	var safe_name = city_name.replace(",", " ")
 	var http = HTTPRequest.new()
 	add_child(http)
-	var url = "https://nominatim.openstreetmap.org/search?q=" + city_name.uri_encode() + "&countrycodes=hu&format=json&limit=1"
+	var url = "https://nominatim.openstreetmap.org/search?q=" + safe_name.uri_encode() + "&countrycodes=hu&format=json&limit=1"
 	http.request(url, ["User-Agent: DriveSim/1.0"])
 	
 	var response = await http.request_completed
@@ -60,6 +70,9 @@ func geocode_city(city_name: String):
 	var body = response[3]
 	http.queue_free()
 	
+	if response_code == 429:
+		return Vector2(-999, -999)
+		
 	if response_code == 200:
 		var json = JSON.new()
 		if json.parse(body.get_string_from_utf8()) == OK:
