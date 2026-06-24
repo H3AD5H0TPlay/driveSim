@@ -52,7 +52,7 @@ func _on_itinerary_button_pressed():
 func geocode_city(city_name: String):
 	var http = HTTPRequest.new()
 	add_child(http)
-	var url = "https://nominatim.openstreetmap.org/search?q=" + city_name.uri_encode() + ",Hungary&format=json&limit=1"
+	var url = "https://nominatim.openstreetmap.org/search?q=" + city_name.uri_encode() + "&countrycodes=hu&format=json&limit=1"
 	http.request(url, ["User-Agent: DriveSim/1.0"])
 	
 	var response = await http.request_completed
