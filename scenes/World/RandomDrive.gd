@@ -10,8 +10,11 @@ func generate_road():
 	path.curve = curve
 	add_child(path)
 	
-	var current_pos = Vector3(0, 0, 0)
-	curve.add_point(current_pos)
+	var current_pos = Vector3(0, 0, 15)
+	curve.add_point(current_pos, Vector3(0,0,5), Vector3(0,0,-5))
+	
+	current_pos = Vector3(0, 0, -15)
+	curve.add_point(current_pos, Vector3(0,0,5), Vector3(0,0,-5))
 	
 	# Generálunk 100 szegmensnyi utat
 	for i in range(1, 100):
@@ -30,12 +33,12 @@ func generate_road():
 	road_mesh.path_interval_type = CSGPolygon3D.PATH_INTERVAL_DISTANCE
 	road_mesh.path_interval = 2.0
 	
-	# Út profilja (egy 8 méter széles, 0.5 magas domború forma)
+	# Szélesebb út (16 méter) a biztonságosabb kezdéshez
 	var profile = PackedVector2Array()
-	profile.push_back(Vector2(-5, -0.5)) # Bal alsó perem
-	profile.push_back(Vector2(-4, 0))    # Bal felső perem
-	profile.push_back(Vector2(4, 0))     # Jobb felső perem
-	profile.push_back(Vector2(5, -0.5))  # Jobb alsó perem
+	profile.push_back(Vector2(-10, -0.5))
+	profile.push_back(Vector2(-8, 0))
+	profile.push_back(Vector2(8, 0))
+	profile.push_back(Vector2(10, -0.5))
 	road_mesh.polygon = profile
 	road_mesh.use_collision = true
 	

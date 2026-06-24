@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://randomdrive123"]
+[gd_scene format=3 uid="uid://crk0pxsyqam55"]
 
 [ext_resource type="PackedScene" uid="uid://vehicleuid123" path="res://scenes/Vehicle/Vehicle.tscn" id="1_vehicle"]
 [ext_resource type="Script" path="res://scenes/World/RandomDrive.gd" id="2_script"]
