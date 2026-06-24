@@ -134,7 +134,8 @@ func generate_road(route_data: Dictionary):
 	var next_pos = curve.get_point_position(1)
 	
 	vehicle.global_position = start_pos + Vector3(0, 2, 0)
-	# Irányba állítás
-	var dir = (start_pos - next_pos).normalized()
-	if dir.length() > 0.1:
-		vehicle.look_at(start_pos + dir, Vector3.UP)
+	# Irányba állítás a következő pont felé
+	var target = next_pos
+	target.y = vehicle.global_position.y # Ne nézzen le a földbe
+	if start_pos.distance_to(next_pos) > 0.1:
+		vehicle.look_at(target, Vector3.UP)

@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://irlmode123"]
+[gd_scene format=3 uid="uid://irlmode123"]
 
 [ext_resource type="PackedScene" uid="uid://vehicleuid123" path="res://scenes/Vehicle/Vehicle.tscn" id="1_vehicle"]
 [ext_resource type="Script" path="res://scenes/World/IRLMode.gd" id="2_script"]
