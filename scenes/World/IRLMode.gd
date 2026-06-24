@@ -137,24 +137,22 @@ func generate_road(route_data: Dictionary):
 	road_mesh.material = mat
 	add_child(road_mesh)
 	
-	# Útiterv szöveg generálása az OSRM step-ekből
+	# Főutak (ref) kigyűjtése az OSRM adatokból (azonnal kész)
 	var steps = route_data["routes"][0]["legs"][0].get("steps", [])
-	var itinerary_text = "[b]Útiterv:[/b]\n\n"
-	var added_names = {}
+	var itinerary_text = "[b]Érintett főutak:[/b]\n"
+	var added_refs = {}
 	for step in steps:
-		var road_name = step.get("name", "")
 		var ref = step.get("ref", "")
-		var display_name = road_name
-		if display_name == "" and ref != "":
-			display_name = ref
-		elif display_name != "" and ref != "":
-			display_name += " (" + ref + ")"
+		# Ha a ref tartalmazza az utat (pl. M5, E 75)
+		if ref != "" and not added_refs.has(ref):
+			itinerary_text += ref + ", "
+			added_refs[ref] = true
 			
-		if display_name != "" and not added_names.has(display_name):
-			itinerary_text += "- " + display_name + "\n"
-			added_names[display_name] = true
-			
+	itinerary_text += "\n\n[b]Érintett települések (töltés...):[/b]\n"
 	$DrivingUI/ItineraryPanel/RichTextLabel.text = itinerary_text
+	
+	# Háttérfolyamat indítása a települések letöltéséhez
+	_fetch_settlements_async(coords, itinerary_text)
 	
 	# Autó pozícionálása az eredeti első pontra (most ez az 1-es indexű, mert a 0-ás az a meghosszabbított kezdés)
 	var start_pos = curve.get_point_position(1) if points_3d.size() > 1 else curve.get_point_position(0)
@@ -166,3 +164,58 @@ func generate_road(route_data: Dictionary):
 	target.y = vehicle.global_position.y # Ne nézzen le a földbe
 	if start_pos.distance_to(next_pos) > 0.1:
 		vehicle.look_at(target, Vector3.UP)
+
+func _fetch_settlements_async(coords: Array, base_text: String):
+	var panel_label = $DrivingUI/ItineraryPanel/RichTextLabel
+	
+	# Mintavételezés kb. minden 10 km-en, hogy ne terheljük túl az API-t
+	var sample_coords = []
+	var accumulated_dist = 0.0
+	sample_coords.append(coords[0])
+	for i in range(1, coords.size()):
+		var p1 = Vector2(float(coords[i-1][0]), float(coords[i-1][1]))
+		var p2 = Vector2(float(coords[i][0]), float(coords[i][1]))
+		var d = p1.distance_to(p2) * 111.0 # kb. távolság km-ben
+		accumulated_dist += d
+		if accumulated_dist >= 10.0:
+			sample_coords.append(coords[i])
+			accumulated_dist = 0.0
+	sample_coords.append(coords[coords.size()-1])
+	
+	var current_text = base_text
+	var added_places = {}
+	var http = HTTPRequest.new()
+	add_child(http)
+	
+	for coord in sample_coords:
+		var lon = float(coord[0])
+		var lat = float(coord[1])
+		var url = "https://nominatim.openstreetmap.org/reverse?lat=%f&lon=%f&format=json&zoom=10" % [lat, lon]
+		
+		http.request(url, ["User-Agent: DriveSim/1.0"])
+		var response = await http.request_completed
+		var code = response[1]
+		var body = response[3]
+		
+		if code == 200:
+			var json = JSON.new()
+			if json.parse(body.get_string_from_utf8()) == OK:
+				var data = json.get_data()
+				var place = ""
+				if data is Dictionary and data.has("address"):
+					var addr = data["address"]
+					if addr.has("city"): place = addr["city"]
+					elif addr.has("town"): place = addr["town"]
+					elif addr.has("village"): place = addr["village"]
+					elif addr.has("municipality"): place = addr["municipality"]
+				
+				if place != "" and not added_places.has(place):
+					current_text += "- " + place + "\n"
+					panel_label.text = current_text + "(Folyamatban...)"
+					added_places[place] = true
+		
+		# Kötelező 1.2 mp várakozás a Nominatim API szabályzata miatt (Max 1 kérés/mp)
+		await get_tree().create_timer(1.2).timeout
+		
+	http.queue_free()
+	panel_label.text = current_text + "\n[i]Útiterv sikeresen betöltve.[/i]"
