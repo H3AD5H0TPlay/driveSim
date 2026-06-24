@@ -138,36 +138,9 @@ func generate_road(route_data: Dictionary):
 	add_child(road_mesh)
 	
 	# Felezővonalak és szélvonalak generálása
-	var markings = CSGPolygon3D.new()
-	markings.mode = CSGPolygon3D.MODE_PATH
-	markings.path_node = path.get_path()
-	markings.path_interval_type = CSGPolygon3D.PATH_INTERVAL_DISTANCE
-	markings.path_interval = 2.0
-	
-	var mark_profile = PackedVector2Array()
-	# Bal szél
-	mark_profile.push_back(Vector2(-3.8, 0.01))
-	mark_profile.push_back(Vector2(-3.6, 0.01))
-	mark_profile.push_back(Vector2(-3.6, 0.02))
-	mark_profile.push_back(Vector2(-3.8, 0.02))
-	
-	# Jobb szél
-	mark_profile.push_back(Vector2(3.6, 0.01))
-	mark_profile.push_back(Vector2(3.8, 0.01))
-	mark_profile.push_back(Vector2(3.8, 0.02))
-	mark_profile.push_back(Vector2(3.6, 0.02))
-	
-	# Középső vonal
-	mark_profile.push_back(Vector2(-0.1, 0.01))
-	mark_profile.push_back(Vector2(0.1, 0.01))
-	mark_profile.push_back(Vector2(0.1, 0.02))
-	mark_profile.push_back(Vector2(-0.1, 0.02))
-	
-	markings.polygon = mark_profile
-	var mark_mat = StandardMaterial3D.new()
-	mark_mat.albedo_color = Color(1.0, 1.0, 1.0)
-	markings.material = mark_mat
-	add_child(markings)
+	add_child(_create_line_mesh(path, 0.0, 0.2)) # Középső felezővonal
+	add_child(_create_line_mesh(path, -3.8, 0.2)) # Bal záróvonal
+	add_child(_create_line_mesh(path, 3.8, 0.2)) # Jobb záróvonal
 	
 	# Főutak (ref) kigyűjtése az OSRM adatokból (azonnal kész)
 	var steps = route_data["routes"][0]["legs"][0].get("steps", [])
@@ -256,3 +229,22 @@ func _fetch_settlements_async(coords: Array, base_text: String):
 		
 	http.queue_free()
 	panel_label.text = current_text + "\n[i]Útiterv sikeresen betöltve.[/i]"
+
+func _create_line_mesh(path_node: Path3D, offset_x: float, width: float) -> CSGPolygon3D:
+	var line = CSGPolygon3D.new()
+	line.mode = CSGPolygon3D.MODE_PATH
+	line.path_node = path_node.get_path()
+	line.path_interval_type = CSGPolygon3D.PATH_INTERVAL_DISTANCE
+	line.path_interval = 2.0
+	
+	var profile = PackedVector2Array()
+	profile.push_back(Vector2(offset_x - width/2, 0.02))
+	profile.push_back(Vector2(offset_x + width/2, 0.02))
+	profile.push_back(Vector2(offset_x + width/2, 0.05))
+	profile.push_back(Vector2(offset_x - width/2, 0.05))
+	
+	line.polygon = profile
+	var mat = StandardMaterial3D.new()
+	mat.albedo_color = Color(1.0, 1.0, 1.0)
+	line.material = mat
+	return line
