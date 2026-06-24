@@ -168,7 +168,7 @@ func generate_road(route_data: Dictionary):
 func _fetch_settlements_async(coords: Array, base_text: String):
 	var panel_label = $DrivingUI/ItineraryPanel/RichTextLabel
 	
-	# Mintavételezés kb. minden 10 km-en, hogy ne terheljük túl az API-t
+	# Mintavételezés sűrűbben (minden 3 km-en), hogy kevesebb település maradjon ki
 	var sample_coords = []
 	var accumulated_dist = 0.0
 	sample_coords.append(coords[0])
@@ -177,7 +177,7 @@ func _fetch_settlements_async(coords: Array, base_text: String):
 		var p2 = Vector2(float(coords[i][0]), float(coords[i][1]))
 		var d = p1.distance_to(p2) * 111.0 # kb. távolság km-ben
 		accumulated_dist += d
-		if accumulated_dist >= 10.0:
+		if accumulated_dist >= 3.0:
 			sample_coords.append(coords[i])
 			accumulated_dist = 0.0
 	sample_coords.append(coords[coords.size()-1])
@@ -204,9 +204,10 @@ func _fetch_settlements_async(coords: Array, base_text: String):
 				var place = ""
 				if data is Dictionary and data.has("address"):
 					var addr = data["address"]
-					if addr.has("city"): place = addr["city"]
+					# Előnyben részesítjük a pontosabb településeket
+					if addr.has("village"): place = addr["village"]
 					elif addr.has("town"): place = addr["town"]
-					elif addr.has("village"): place = addr["village"]
+					elif addr.has("city"): place = addr["city"]
 					elif addr.has("municipality"): place = addr["municipality"]
 				
 				if place != "" and not added_places.has(place):
