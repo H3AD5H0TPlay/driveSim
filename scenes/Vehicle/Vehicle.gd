@@ -1,7 +1,7 @@
 extends VehicleBody3D
 
 const MAX_ENGINE_FORCE = 400.0
-const MAX_BRAKE_FORCE = 10.0
+const MAX_BRAKE_FORCE = 150.0
 const MAX_STEER_ANGLE = 0.5
 
 func _physics_process(delta):
