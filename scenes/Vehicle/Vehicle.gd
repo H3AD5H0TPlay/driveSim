@@ -16,9 +16,9 @@ func _physics_process(delta):
 
 	var accel = 0.0
 	if Input.is_action_pressed("ui_up") or Input.is_physical_key_pressed(KEY_W):
-		accel = MAX_ENGINE_FORCE
-	elif Input.is_action_pressed("ui_down") or Input.is_physical_key_pressed(KEY_S):
 		accel = -MAX_ENGINE_FORCE
+	elif Input.is_action_pressed("ui_down") or Input.is_physical_key_pressed(KEY_S):
+		accel = MAX_ENGINE_FORCE
 
 	engine_force = accel
 	
